@@ -1,28 +1,8 @@
 [TOC]
 
-
-
-# 金融信贷项目
-
-## 系统架构设计
-
-![image-20200507235528415](pic_lib/image-20200507235528415.png)
-
-## 数据流程设计
-
-![image-20200507235554764](pic_lib/image-20200507235554764.png)
-
-
-
-## 集群规划
-
-![image-20200507235822200](pic_lib/image-20200507235822200.png)
-
-
-
 # Zookeeper
 
-## 概述
+## zookeeper概述
 
 ### 定义
 
@@ -1004,9 +984,123 @@ public class Test {
 }
 ```
 
+## zookeeper 集群配置管理项目案例
 
+> 使集群中的机器可以共享配置信息
+>
+> zookeeper可作为一个具有高可用性的配置存储系统，允许分布式系统各个节点检索和更新配置信息
 
+![image-20200518131758977](pic_lib/image-20200518131758977.png)
 
+- 要求：
+	- 分布式应用中各个节点配置信息一致
+	- 配置文件修改后，希望能快速同步到各个节点中
 
+#### 节点监听
 
+`ConfigWatcher.java`
 
+```java
+package zookeeper_operation;
+
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.WatchedEvent;
+import org.apache.zookeeper.Watcher;
+
+public class ConfigWatcher implements Watcher {
+    private  ReadWriteZookeeper rwzk;
+    public static final String path = "/config";
+
+    /**
+     * 构造函数，传入节点地址
+     * @param hosts
+     * @throws InterruptedException
+     */
+    public ConfigWatcher(String hosts) throws InterruptedException {
+        rwzk = new ReadWriteZookeeper();
+        rwzk.connect(hosts);
+    }
+
+    /**
+     * 节点数据变化后，读取节点数据
+     * @throws KeeperException
+     * @throws InterruptedException
+     */
+    public void display_config() throws KeeperException, InterruptedException {
+        String result = rwzk.read_znode_data(path,this,null);
+        System.out.println(result);
+    }
+
+    /**
+     * 监听节点数据
+     * @param event
+     */
+    @Override
+    public void process(WatchedEvent event) {
+        if(event.getType() == Event.EventType.NodeDataChanged){
+            try {
+                display_config();
+            } catch (KeeperException e) {
+                e.printStackTrace();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public static void main(String[] args) throws InterruptedException, KeeperException {
+        String hosts = "10.211.55.22:2181,10.211.55.23:2181,10.211.55.24:2181";
+        ConfigWatcher confwather = new ConfigWatcher(hosts);
+        confwather.display_config();
+//        一直处于运行监听状态
+        Thread.sleep(Long.MAX_VALUE);
+
+    }
+}
+
+```
+
+#### 节点数据更新
+
+`ConfigUpdater.java`
+
+```java
+package zookeeper_operation;
+
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.data.Stat;
+
+import java.util.Random;
+import java.util.concurrent.TimeUnit;
+
+public class ConfigUpdater {
+    private  ReadWriteZookeeper rwzk;
+    public static final String path = "/config";
+
+    /**
+     * 构造函数，传入节点地址
+     * @param hosts
+     * @throws InterruptedException
+     */
+    public ConfigUpdater(String hosts) throws InterruptedException {
+        rwzk = new ReadWriteZookeeper();
+        rwzk.connect(hosts);
+    }
+
+    public void run() throws KeeperException, InterruptedException {
+        while (true){
+            String data = (int)(Math.random()*100)+"";
+            Stat state = rwzk.set_znode_data(path,data);
+            System.out.println("写入数据:"+data);
+            TimeUnit.SECONDS.sleep(5);
+        }
+    }
+
+    public static void main(String[] args) throws InterruptedException, KeeperException {
+        String hosts = "10.211.55.22:2181,10.211.55.23:2181,10.211.55.24:2181";
+        ConfigUpdater conf_update = new ConfigUpdater(hosts);
+        conf_update.run();
+    }
+}
+
+```
