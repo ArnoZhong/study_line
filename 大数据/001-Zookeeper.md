@@ -48,7 +48,7 @@
 
 #### 写流程
 
-![image-20200511222110516](../../Arno/code/image-20200511222110516.png)
+![img](pic_lib/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3d4MTUyODE1OTQwOQ==,size_16,color_FFFFFF,t_70.png)
 
 - server1 接收客户端请求
 - 如果server1不是leader，将请求发给leader
