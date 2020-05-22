@@ -210,3 +210,169 @@
 
 		![image-20200521230937698](pic_lib/image-20200521230937698.png)
 
+ 
+
+## Maven 管理多个 MapReduce 项目
+
+- [参考Apache hadoop官方代码样式](https://github.com/apache/hadoop/blob/trunk/hadoop-mapreduce-project/hadoop-mapreduce-examples/src/main/java/org/apache/hadoop/examples/ExampleDriver.java)：
+
+	- ```java
+		/**
+		 * Licensed to the Apache Software Foundation (ASF) under one
+		 * or more contributor license agreements.  See the NOTICE file
+		 * distributed with this work for additional information
+		 * regarding copyright ownership.  The ASF licenses this file
+		 * to you under the Apache License, Version 2.0 (the
+		 * "License"); you may not use this file except in compliance
+		 * with the License.  You may obtain a copy of the License at
+		 *
+		 *     http://www.apache.org/licenses/LICENSE-2.0
+		 *
+		 * Unless required by applicable law or agreed to in writing, software
+		 * distributed under the License is distributed on an "AS IS" BASIS,
+		 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+		 * See the License for the specific language governing permissions and
+		 * limitations under the License.
+		 */
+		
+		package org.apache.hadoop.examples;
+		
+		import org.apache.hadoop.examples.dancing.DistributedPentomino;
+		import org.apache.hadoop.examples.dancing.Sudoku;
+		import org.apache.hadoop.examples.pi.DistBbp;
+		import org.apache.hadoop.examples.terasort.TeraGen;
+		import org.apache.hadoop.examples.terasort.TeraSort;
+		import org.apache.hadoop.examples.terasort.TeraValidate;
+		import org.apache.hadoop.util.ProgramDriver;
+		
+		/**
+		 * A description of an example program based on its class and a 
+		 * human-readable description.
+		 */
+		public class ExampleDriver {
+		  
+		  public static void main(String argv[]){
+		    int exitCode = -1;
+		    ProgramDriver pgd = new ProgramDriver();
+		    try {
+		      pgd.addClass("wordcount", WordCount.class, 
+		                   "A map/reduce program that counts the words in the input files.");
+		      pgd.addClass("wordmean", WordMean.class,
+		                   "A map/reduce program that counts the average length of the words in the input files.");
+		      pgd.addClass("wordmedian", WordMedian.class,
+		                   "A map/reduce program that counts the median length of the words in the input files.");
+		      pgd.addClass("wordstandarddeviation", WordStandardDeviation.class,
+		                   "A map/reduce program that counts the standard deviation of the length of the words in the input files.");
+		      pgd.addClass("aggregatewordcount", AggregateWordCount.class, 
+		                   "An Aggregate based map/reduce program that counts the words in the input files.");
+		      pgd.addClass("aggregatewordhist", AggregateWordHistogram.class, 
+		                   "An Aggregate based map/reduce program that computes the histogram of the words in the input files.");
+		      pgd.addClass("grep", Grep.class, 
+		                   "A map/reduce program that counts the matches of a regex in the input.");
+		      pgd.addClass("randomwriter", RandomWriter.class, 
+		                   "A map/reduce program that writes 10GB of random data per node.");
+		      pgd.addClass("randomtextwriter", RandomTextWriter.class, 
+		      "A map/reduce program that writes 10GB of random textual data per node.");
+		      pgd.addClass("sort", Sort.class, "A map/reduce program that sorts the data written by the random writer.");
+		
+		      pgd.addClass("pi", QuasiMonteCarlo.class, QuasiMonteCarlo.DESCRIPTION);
+		      pgd.addClass("bbp", BaileyBorweinPlouffe.class, BaileyBorweinPlouffe.DESCRIPTION);
+		      pgd.addClass("distbbp", DistBbp.class, DistBbp.DESCRIPTION);
+		
+		      pgd.addClass("pentomino", DistributedPentomino.class,
+		      "A map/reduce tile laying program to find solutions to pentomino problems.");
+		      pgd.addClass("secondarysort", SecondarySort.class,
+		                   "An example defining a secondary sort to the reduce.");
+		      pgd.addClass("sudoku", Sudoku.class, "A sudoku solver.");
+		      pgd.addClass("join", Join.class, "A job that effects a join over sorted, equally partitioned datasets");
+		      pgd.addClass("multifilewc", MultiFileWordCount.class, "A job that counts words from several files.");
+		      pgd.addClass("dbcount", DBCountPageView.class, "An example job that count the pageview counts from a database.");
+		      pgd.addClass("teragen", TeraGen.class, "Generate data for the terasort");
+		      pgd.addClass("terasort", TeraSort.class, "Run the terasort");
+		      pgd.addClass("teravalidate", TeraValidate.class, "Checking results of terasort");
+		      exitCode = pgd.run(argv);
+		    }
+		    catch(Throwable e){
+		      e.printStackTrace();
+		    }
+		    
+		    System.exit(exitCode);
+		  }
+		}
+		
+		```
+
+		- 通过ExampleDriver类实现，将已经写好的 MapReduce 项目添加进去，取个别名，就不用再调用的时候，再输入原始 project 中的包名类名。
+			- 之前打包后执行命令：
+				- `bin/hadoop jar /home/parallels/app/test/com.hadoop_test.jar org.example.test001.WordCount /test/test.txt /test/wc_out`
+			- 官方执行命令：
+				- `hadoop-mapreduce-examples-2.6.0-cdh5.10.0.jar wordcount /test/test.txt test/wc_out`
+
+- pom.xml 添加内容
+
+	- ```xml
+		<build>
+		    <plugins>
+		      <plugin>
+		        <groupId>org.apache.maven.plugins</groupId>
+		        <artifactId>maven-shade-plugin</artifactId>
+		<!--        <version>3.1.0</version>-->
+		        <executions>
+		          <execution>
+		            <phase>package</phase>
+		            <goals>
+		              <goal>shade</goal>
+		            </goals>
+		            <configuration>
+		              <transformers>
+		                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+		                  <!-- main()所在的类，注意修改 -->
+		                  <mainClass>org.example.test001.TestDriver</mainClass>
+		                </transformer>
+		              </transformers>
+		            </configuration>
+		          </execution>
+		        </executions>
+		      </plugin>
+		    </plugins>
+		  </build>
+		```
+
+- 添加TestDriver类，在org.example.test001包下
+
+	- ```java
+		package org.example.test001;
+		
+		import org.apache.hadoop.util.ProgramDriver;
+		
+		public class TestDriver {
+		    public static void main(String[] args) throws Throwable {
+		        int exitCode = -1;
+		        ProgramDriver pgd = new ProgramDriver();
+		        /*******************如果有多个类，可以添加多个************************/
+		
+		        pgd.addClass("wordcount", WordCount.class,
+		                "A map/reduce program that counts the words in the input files.");
+		        /*******************************************/
+		        exitCode = pgd.run(args);
+		        System.exit(exitCode);
+		    }
+		}
+		
+		```
+
+		
+
+- maven 打包上传到集群中
+
+- 执行命令：
+
+	- ```shell
+		bin/hadoop jar /home/parallels/app/test/com.hadoop_test-1.0-SNAPSHOT.jar wordcount /test/test.txt test/wc_out
+		
+		```
+
+	- 执行成功
+
+	- ![image-20200522113129575](pic_lib/image-20200522113129575.png)
+
