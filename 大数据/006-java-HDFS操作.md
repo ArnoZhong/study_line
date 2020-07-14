@@ -229,11 +229,11 @@ public class Test {
         Test hdfs_test = new Test();
         String path = "/test/java/test3";
 //        hdfs_test.creat_path(path);
-//        String localfilepath = "/Users/shanjiaojiao/Documents/Arno/机器学习/book/Google云计算三大论文英文版.rar";
+//        String localfilepath = "/Users/Arno/Documents/Arno/机器学习/book/Google云计算三大论文英文版.rar";
 //        String hdfsfilepath = "/test/java/test1/";
 //        hdfs_test.cope_localfile_to_hdfs(localfilepath,hdfsfilepath);
 
-//        String localfilepath_new = "/Users/shanjiaojiao/Documents/临时文件";
+//        String localfilepath_new = "/Users/Arno/Documents/临时文件";
         String hdfsfilepath_new = "/test/java/test1/Google云计算三大论文英文版.rar";
 //        hdfs_test.copy_hdfs_to_local(localfilepath_new, hdfsfilepath_new);
 //        hdfs_test.read_path("/test");
