@@ -69,7 +69,6 @@
 - 命令：
 
 	- `nginx -s relaod` 重新加载nginx命令
-
 - 参数：
 
 	- -?,-h     :帮助
@@ -83,9 +82,33 @@
 	- -p 制定运行目录
 	- -c 使用制定配置文件
 
-	
+## nginx 和 apache 比较优缺点
 
-	
+### nginx相对于apache的优点
+
+- 轻量级，同样起web 服务，比apache 占用更少的内存及资源 
+- 高并发，nginx 处理请求是异步非阻塞的，而apache 则是阻塞型的，在高并发下nginx 能保持低资源低消耗高性能 
+- 高度模块化的设计，编写模块相对简单 
+- 社区活跃，各种高性能模块出品迅速啊 
+
+### apache 相对于nginx 的优点
+
+- rewrite ，比nginx 的rewrite 强大 （地址重定向）
+- 模块超多，基本想到的都可以找到 
+- 少bug ，nginx 的bug 相对较多 
+- 超稳定 
+
+### web 服务器比较
+
+- nginx 高并发 适合做http代理
+- Nginx作为负载均衡服务器
+- nginx 静态网页处理性能比 Apache 高
+- Apache 的组件比 Nginx 多 
+- nginx处理动态请求是鸡肋，一般动态请求要apache去做，nginx只适合静态和反向
+
+
+
+
 
 
 
